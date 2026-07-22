@@ -49,8 +49,8 @@ def encrypt(data: dict[str, Any], master_password: str) -> bytes:
 
     return json.dumps(encryptedVault, indent=2).encode("utf-8")
 
-def decrypt(encrypted_data: bytes, master_password: str) -> dict[str, Any]:
-    vault = json.loads(encrypted_data.decode("utf-8"))
+def decrypt(encryptedData: bytes, master_password: str) -> dict[str, Any]:
+    vault = json.loads(encryptedData.decode("utf-8"))
 
     salt = decode(vault["salt"])
     nonce = decode(vault["nonce"])

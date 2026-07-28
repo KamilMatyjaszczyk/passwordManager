@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "kdf": "argon2id",
+  "cipher": "aes-256-gcm",
+  "salt": "EKc85ZXKmnT4SNSVjKT53A==",
+  "nonce": "C2IDurz/jiK6qCs/",
+  "ciphertext": "5o9zqxUQSMMqiQwcvAQjw+oOzL+GcGAUW+gGEYVNDA=="
+}

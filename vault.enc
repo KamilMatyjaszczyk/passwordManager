@@ -1,8 +1,0 @@
-{
-  "version": 1,
-  "kdf": "argon2id",
-  "cipher": "aes-256-gcm",
-  "salt": "bLyONQqmq9JZ60BUDK7Mqg==",
-  "nonce": "JxDDjy0OQeqq/fUZ",
-  "ciphertext": "WiNH4TorHL73vEQUWgnjqLrv5R2DugT/o2cv0SEpzg088mbmhdspPGzwL/Ssj6Znz7MGgR1/RR6mmoeGnVNJpPmGpOeCSata6tioidG6te2JLepuCQi/6VmdFInhgGxGLn7Onvifi73clFLVwMRLWLSgYUkbMCOFgnJpTXw7P6Y6VKcCwv2i13Xe8ZzjuI25VXqZxfnaQ2bC5q+s5aQgaeIM/TN45vN0p8huHjonZ2cvT6ypptHo6wrTU+dmNjgUqPlstZ/j"
-}

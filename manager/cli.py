@@ -2,9 +2,11 @@ import argparse
 import secrets
 import string
 from getpass import getpass
+from pathlib import Path
 
 from cryptography.exceptions import InvalidTag
 
+from manager.keyfile import createKeyfile
 from manager.vault import (
     createVault,
     addEntry,
@@ -21,7 +23,19 @@ def ask_master_password() -> str:
     return getpass("Master password: ")
 
 
+def require_keyfile(args: argparse.Namespace) -> str | None:
+    if args.keyfile is None:
+        print("Keyfile is required. Use --keyfile /path/to/vault.key")
+        return None
+
+    return args.keyfile
+
+
 def handle_init(args: argparse.Namespace) -> None:
+    keyfilePath = require_keyfile(args)
+    if keyfilePath is None:
+        return
+
     master_password = getpass("Create master password: ")
     confirm_password = getpass("Confirm master password: ")
 
@@ -30,13 +44,33 @@ def handle_init(args: argparse.Namespace) -> None:
         return
 
     try:
-        createVault(args.vault, master_password)
+        if not Path(keyfilePath).exists():
+            createKeyfile(keyfilePath)
+            print(f"Keyfile created: {keyfilePath}")
+
+        createVault(args.vault, master_password, keyfilePath)
         print(f"Vault created: {args.vault}")
     except FileExistsError:
         print(f"Vault already exists: {args.vault}")
+    except FileNotFoundError:
+        print("Keyfile path not found. Check that the USB path exists.")
+
+
+def handle_generate_keyfile(args: argparse.Namespace) -> None:
+    try:
+        createKeyfile(args.path)
+        print(f"Keyfile created: {args.path}")
+    except FileExistsError:
+        print(f"Keyfile already exists: {args.path}")
+    except FileNotFoundError:
+        print("Keyfile path not found. Check that the USB path exists.")
 
 
 def handle_add(args: argparse.Namespace) -> None:
+    keyfilePath = require_keyfile(args)
+    if keyfilePath is None:
+        return
+
     master_password = ask_master_password()
 
     title = input("Title: ")
@@ -49,6 +83,7 @@ def handle_add(args: argparse.Namespace) -> None:
         addEntry(
             args.vault,
             master_password,
+            keyfilePath,
             title=title,
             username=username,
             password=password,
@@ -57,18 +92,22 @@ def handle_add(args: argparse.Namespace) -> None:
         )
         print("Entry saved.")
     except FileNotFoundError:
-        print("Vault does not exist. Run init first.")
+        print("Vault or keyfile not found. Run init first or check --keyfile.")
     except InvalidTag:
-        print("Wrong master password.")
+        print("Wrong master password or keyfile.")
     except Exception as error:
         print(f"Something went wrong: {error}")
 
 
 def handle_list(args: argparse.Namespace) -> None:
+    keyfilePath = require_keyfile(args)
+    if keyfilePath is None:
+        return
+
     master_password = ask_master_password()
 
     try:
-        entries = listEntries(args.vault, master_password)
+        entries = listEntries(args.vault, master_password, keyfilePath)
 
         if not entries:
             print("No entries found.")
@@ -79,18 +118,22 @@ def handle_list(args: argparse.Namespace) -> None:
             print(f"- {entry}")
 
     except FileNotFoundError:
-        print("Vault does not exist. Run init first.")
+        print("Vault or keyfile not found. Run init first or check --keyfile.")
     except InvalidTag:
-        print("Wrong master password.")
+        print("Wrong master password or keyfile.")
     except Exception as error:
         print(f"Something went wrong: {error}")
 
 
 def handle_get(args: argparse.Namespace) -> None:
+    keyfilePath = require_keyfile(args)
+    if keyfilePath is None:
+        return
+
     master_password = ask_master_password()
 
     try:
-        entry = getEntry(args.vault, master_password, args.title)
+        entry = getEntry(args.vault, master_password, keyfilePath, args.title)
 
         if entry is None:
             print("Entry not found.")
@@ -104,18 +147,22 @@ def handle_get(args: argparse.Namespace) -> None:
         print(f"Notes: {entry['notes']}")
 
     except FileNotFoundError:
-        print("Vault does not exist. Run init first.")
+        print("Vault or keyfile not found. Run init first or check --keyfile.")
     except InvalidTag:
-        print("Wrong master password.")
+        print("Wrong master password or keyfile.")
     except Exception as error:
         print(f"Something went wrong: {error}")
 
 
 def handle_delete(args: argparse.Namespace) -> None:
+    keyfilePath = require_keyfile(args)
+    if keyfilePath is None:
+        return
+
     master_password = ask_master_password()
 
     try:
-        deleted = deleteEntry(args.vault, master_password, args.title)
+        deleted = deleteEntry(args.vault, master_password, keyfilePath, args.title)
 
         if deleted:
             print("Entry deleted.")
@@ -123,9 +170,9 @@ def handle_delete(args: argparse.Namespace) -> None:
             print("Entry not found.")
 
     except FileNotFoundError:
-        print("Vault does not exist. Run init first.")
+        print("Vault or keyfile not found. Run init first or check --keyfile.")
     except InvalidTag:
-        print("Wrong master password.")
+        print("Wrong master password or keyfile.")
     except Exception as error:
         print(f"Something went wrong: {error}")
 
@@ -160,6 +207,10 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_VAULT_PATH,
         help="Path to the encrypted vault file",
     )
+    parser.add_argument(
+        "--keyfile",
+        help="Path to the local USB keyfile",
+    )
 
     subparsers = parser.add_subparsers(
         dest="command",
@@ -171,6 +222,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Create a new vault",
     )
     init_parser.set_defaults(func=handle_init)
+
+    keyfile_parser = subparsers.add_parser(
+        "generate-keyfile",
+        help="Create a new random keyfile",
+    )
+    keyfile_parser.add_argument("path", help="Path where the keyfile should be created")
+    keyfile_parser.set_defaults(func=handle_generate_keyfile)
 
     add_parser = subparsers.add_parser(
         "add",

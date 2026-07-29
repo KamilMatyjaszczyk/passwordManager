@@ -10,16 +10,30 @@ ARGON2_TIME_COST = 3
 ARGON2_MEMORY_COST = 65536 # 64 MB
 ARGON2_PARALLELLISM = 4
 KEY_LENGTH = 32 # 256 BIT KEY
+KEY_MATERIAL_DOMAIN = b"password-manager-v1"
 
 def encode(data: bytes) -> str:
     return base64.b64encode(data).decode("utf-8")
 
-def decode(data: bytes) -> str:
+def decode(data: str) -> bytes:
     return base64.b64decode(data.encode("utf-8"))
 
-def derive_key(master_password: str, salt: bytes) -> bytes:
+def build_key_material(master_password: str, keyfileData: bytes) -> bytes:
+    password = master_password.encode("utf-8")
+
+    return b"".join(
+        [
+            KEY_MATERIAL_DOMAIN,
+            len(password).to_bytes(4, "big"),
+            password,
+            len(keyfileData).to_bytes(4, "big"),
+            keyfileData,
+        ]
+    )
+
+def derive_key(master_password: str, keyfileData: bytes, salt: bytes) -> bytes:
     return hash_secret_raw(
-        secret=master_password.encode("utf-8"),
+        secret=build_key_material(master_password, keyfileData),
         salt=salt,
         time_cost=ARGON2_TIME_COST,
         memory_cost=ARGON2_MEMORY_COST,
@@ -28,11 +42,11 @@ def derive_key(master_password: str, salt: bytes) -> bytes:
         type=Type.ID,
     )
 
-def encrypt(data: dict[str, Any], master_password: str) -> bytes:
+def encrypt(data: dict[str, Any], master_password: str, keyfileData: bytes) -> bytes:
     salt = os.urandom(16)
     nonce = os.urandom(12)
 
-    key = derive_key(master_password, salt)
+    key = derive_key(master_password, keyfileData, salt)
     aesgcm = AESGCM(key)
 
     plaintext = json.dumps(data).encode("utf-8")
@@ -42,6 +56,7 @@ def encrypt(data: dict[str, Any], master_password: str) -> bytes:
         "version": 1, 
         "kdf": "argon2id",
         "cipher": "aes-256-gcm",
+        "key_material": "master-password+keyfile",
         "salt": encode(salt),
         "nonce": encode(nonce),
         "ciphertext": encode(ciphertext),
@@ -49,14 +64,14 @@ def encrypt(data: dict[str, Any], master_password: str) -> bytes:
 
     return json.dumps(encryptedVault, indent=2).encode("utf-8")
 
-def decrypt(encryptedData: bytes, master_password: str) -> dict[str, Any]:
+def decrypt(encryptedData: bytes, master_password: str, keyfileData: bytes) -> dict[str, Any]:
     vault = json.loads(encryptedData.decode("utf-8"))
 
     salt = decode(vault["salt"])
     nonce = decode(vault["nonce"])
     ciphertext = decode(vault["ciphertext"])
 
-    key = derive_key(master_password, salt)
+    key = derive_key(master_password, keyfileData, salt)
     aesgcm = AESGCM(key)
 
     plaintext = aesgcm.decrypt(nonce, ciphertext, None)

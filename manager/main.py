@@ -1,5 +1,7 @@
 from getpass import getpass
+from pathlib import Path
 
+from manager.keyfile import createKeyfile
 from manager.vault import (
     createVault,
     listEntries,
@@ -24,20 +26,28 @@ def showMenu() -> None:
 
 
 def createVaultMenu() -> None:
+    keyfile_path = input("Keyfile path: ")
     master_password = getpass("Create master password: ")
 
     try:
-        createVault(VAULT_PATH, master_password)
+        if not Path(keyfile_path).exists():
+            createKeyfile(keyfile_path)
+            print("Keyfile created.")
+
+        createVault(VAULT_PATH, master_password, keyfile_path)
         print("Vault created.")
     except FileExistsError:
         print("Vault already exists.")
+    except FileNotFoundError:
+        print("Keyfile path not found. Check that the USB path exists.")
 
 
 def listEntriesMenu() -> None:
+    keyfile_path = input("Keyfile path: ")
     master_password = getpass("Master password: ")
 
     try:
-        entries = listEntries(VAULT_PATH, master_password)
+        entries = listEntries(VAULT_PATH, master_password, keyfile_path)
 
         if not entries:
             print("No entries found.")
@@ -54,6 +64,7 @@ def listEntriesMenu() -> None:
 
 
 def addEntryMenu() -> None:
+    keyfile_path = input("Keyfile path: ")
     master_password = getpass("Master password: ")
 
     title = input("Title: ")
@@ -66,6 +77,7 @@ def addEntryMenu() -> None:
         addEntry(
             VAULT_PATH,
             master_password,
+            keyfile_path,
             title=title,
             username=username,
             password=password,
@@ -82,11 +94,12 @@ def addEntryMenu() -> None:
 
 
 def getEntryMenu() -> None:
+    keyfile_path = input("Keyfile path: ")
     master_password = getpass("Master password: ")
     title = input("Title to search for: ")
 
     try:
-        entry = getEntry(VAULT_PATH, master_password, title)
+        entry = getEntry(VAULT_PATH, master_password, keyfile_path, title)
 
         if entry is None:
             print("Entry not found.")
@@ -106,11 +119,12 @@ def getEntryMenu() -> None:
 
 
 def deleteEntryMenu() -> None:
+    keyfile_path = input("Keyfile path: ")
     master_password = getpass("Master password: ")
     title = input("Title to delete: ")
 
     try:
-        deleted = deleteEntry(VAULT_PATH, master_password, title)
+        deleted = deleteEntry(VAULT_PATH, master_password, keyfile_path, title)
 
         if deleted:
             print("Entry deleted.")

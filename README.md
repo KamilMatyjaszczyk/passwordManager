@@ -1,5 +1,7 @@
 # Local USB Password Manager
 
+[![CI](https://github.com/KamilMatyjaszczyk/passwordManager/actions/workflows/ci.yml/badge.svg)](https://github.com/KamilMatyjaszczyk/passwordManager/actions/workflows/ci.yml)
+
 En lokal passordbehandler der en kryptert vault krever både et
 master-passord og en tilfeldig keyfile på en flyttbar USB-enhet.
 

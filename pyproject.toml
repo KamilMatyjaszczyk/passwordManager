@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-usb-password-manager"
+dynamic = ["version"]
+description = "A local encrypted password manager protected by a master password and USB keyfile."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "argon2-cffi>=25.1.0,<26.0.0",
+    "cryptography>=49.0.0,<50.0.0",
+    "dbus-next>=0.2.3,<0.3.0; sys_platform == 'linux'",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=9.1.1,<10.0.0",
+]
+
+[project.scripts]
+pm = "manager.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "manager.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["manager"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,6 +1,53 @@
+# Python bytecode and caches
 __pycache__/
 *.py[cod]
+*$py.class
 
+# Virtual environments and local environment variables
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+
+# Tests, coverage, type checking, and linting
 .pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.pyright/
+.ruff_cache/
+.hypothesis/
 
+# Python packaging and release artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+wheels/
+pip-wheel-metadata/
+
+# Password-manager secrets and runtime files
 *.enc
+*.key
+*.keyfile
+.*.lock
+.*.tmp
+
+# Editors and local workspace state
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini

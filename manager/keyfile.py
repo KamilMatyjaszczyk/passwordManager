@@ -1,28 +1,32 @@
 import os
 from pathlib import Path
 
+from manager.secure_file import (
+    createPrivateFile,
+    ensurePrivatePermissions,
+    secureReadBytes,
+)
+
 
 KEYFILE_SIZE = 64
 
 
 def createKeyfile(keyfilePath: str) -> None:
     path = Path(keyfilePath)
-
-    if path.exists():
-        raise FileExistsError(f"Keyfile already exists: {keyfilePath}")
-
-    path.write_bytes(os.urandom(KEYFILE_SIZE))
+    createPrivateFile(
+        path,
+        os.urandom(KEYFILE_SIZE),
+        permissionsRequired=False,
+    )
 
 
 def readKeyfile(keyfilePath: str) -> bytes:
     path = Path(keyfilePath)
 
-    if not path.exists():
-        raise FileNotFoundError(f"Keyfile not found: {keyfilePath}")
+    ensurePrivatePermissions(path, required=False)
+    keyfileData = secureReadBytes(path, KEYFILE_SIZE)
 
-    keyfileData = path.read_bytes()
-
-    if not keyfileData:
-        raise ValueError("Keyfile is empty.")
+    if len(keyfileData) != KEYFILE_SIZE:
+        raise ValueError(f"Keyfile must be exactly {KEYFILE_SIZE} bytes.")
 
     return keyfileData

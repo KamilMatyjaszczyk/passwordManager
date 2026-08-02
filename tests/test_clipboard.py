@@ -143,6 +143,29 @@ def test_copyq_sensitive_backend_is_preferred_on_x11(monkeypatch) -> None:
     assert backend.name == "copyq-sensitive"
 
 
+def test_windows_native_backend_is_selected(monkeypatch) -> None:
+    monkeypatch.setattr(clipboard.sys, "platform", "win32")
+
+    backend = findClipboardBackend()
+
+    assert backend is not None
+    assert backend.name == "windows-native"
+
+
+def test_macos_sensitive_backend_is_selected(monkeypatch) -> None:
+    monkeypatch.setattr(clipboard.sys, "platform", "darwin")
+    monkeypatch.setattr(
+        clipboard.shutil,
+        "which",
+        lambda executable: f"/usr/bin/{executable}",
+    )
+
+    backend = findClipboardBackend()
+
+    assert backend is not None
+    assert backend.name == "macos-sensitive"
+
+
 def test_macos_sensitive_backend_sets_concealed_type() -> None:
     backend = next(
         backend

@@ -19,17 +19,21 @@ from manager.keyfile_location import KeyfileLocationError
 from manager.vault import createVault
 
 
-def test_require_keyfile_validates_explicit_keyfile(monkeypatch) -> None:
+def test_require_keyfile_validates_explicit_keyfile(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     validated_paths = []
-    args = argparse.Namespace(keyfile="/media/kamil/USB/vault.key")
+    keyfilePath = str(tmp_path / "usb" / "vault.key")
+    args = argparse.Namespace(keyfile=keyfilePath)
 
     def fake_validate(path: str) -> None:
         validated_paths.append(path)
 
     monkeypatch.setattr(cli, "validateKeyfileLocation", fake_validate)
 
-    assert cli.require_keyfile(args) == "/media/kamil/USB/vault.key"
-    assert validated_paths == ["/media/kamil/USB/vault.key"]
+    assert cli.require_keyfile(args) == keyfilePath
+    assert validated_paths == [keyfilePath]
 
 
 def test_require_keyfile_rejects_invalid_explicit_keyfile(
@@ -49,14 +53,18 @@ def test_require_keyfile_rejects_invalid_explicit_keyfile(
     assert "[ERROR] Invalid keyfile location" in captured.err
 
 
-def test_require_keyfile_validates_config_keyfile(monkeypatch) -> None:
+def test_require_keyfile_validates_config_keyfile(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     validated_paths = []
+    keyfilePath = str(tmp_path / "usb" / "vault.key")
     args = argparse.Namespace(keyfile=None)
 
     monkeypatch.setattr(
         cli,
         "loadConfig",
-        lambda: {"keyfile_path": "/media/kamil/USB/vault.key"},
+        lambda: {"keyfile_path": keyfilePath},
     )
 
     def fake_validate(path: str) -> None:
@@ -64,8 +72,8 @@ def test_require_keyfile_validates_config_keyfile(monkeypatch) -> None:
 
     monkeypatch.setattr(cli, "validateKeyfileLocation", fake_validate)
 
-    assert cli.require_keyfile(args) == "/media/kamil/USB/vault.key"
-    assert validated_paths == ["/media/kamil/USB/vault.key"]
+    assert cli.require_keyfile(args) == keyfilePath
+    assert validated_paths == [keyfilePath]
 
 
 def test_resolve_vault_returns_absolute_path(

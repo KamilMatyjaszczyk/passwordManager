@@ -171,22 +171,20 @@ def commandSupportsOption(executable: str, option: str) -> bool:
 
 def backendSupportsCurrentPlatform(backend: ClipboardBackend) -> bool:
     if backend.nativeHandler == "windows":
-        return os.name == "nt"
+        return sys.platform.startswith("win")
 
     if backend.name.startswith("macos"):
         return sys.platform == "darwin"
 
     if backend.name.startswith("wayland"):
         return (
-            os.name != "nt"
-            and sys.platform != "darwin"
+            sys.platform.startswith("linux")
             and bool(os.environ.get("WAYLAND_DISPLAY"))
         )
 
     if backend.name == "copyq-sensitive":
         return (
-            os.name != "nt"
-            and sys.platform != "darwin"
+            sys.platform.startswith("linux")
             and bool(
                 os.environ.get("WAYLAND_DISPLAY")
                 or os.environ.get("DISPLAY")
@@ -195,8 +193,7 @@ def backendSupportsCurrentPlatform(backend: ClipboardBackend) -> bool:
 
     if backend.name in {"xclip", "xsel"}:
         return (
-            os.name != "nt"
-            and sys.platform != "darwin"
+            sys.platform.startswith("linux")
             and bool(os.environ.get("DISPLAY"))
         )
 

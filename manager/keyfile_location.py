@@ -54,7 +54,7 @@ def loadMounts() -> list[MountInfo]:
             majorMinor = parts[2]
             try:
                 deviceId = os.stat(mountPoint).st_dev
-            except FileNotFoundError:
+            except (FileNotFoundError, PermissionError):
                 continue
 
             mounts.append(MountInfo(mountPoint, deviceId, majorMinor))
